@@ -21,6 +21,7 @@ import org.gotson.komga.infrastructure.image.ImageAnalyzer
 import org.gotson.komga.infrastructure.image.ImageConverter
 import org.gotson.komga.infrastructure.image.ImageType
 import org.gotson.komga.infrastructure.mediacontainer.ContentDetector
+import org.gotson.komga.infrastructure.mediacontainer.PanelDetectionService
 import org.gotson.komga.infrastructure.mediacontainer.divina.DivinaExtractor
 import org.gotson.komga.infrastructure.mediacontainer.epub.EpubExtractor
 import org.gotson.komga.infrastructure.mediacontainer.epub.epub
@@ -51,6 +52,7 @@ class BookAnalyzer(
   private val thumbnailType: ImageType,
   @Qualifier("pdfImageType")
   private val pdfImageType: ImageType,
+  private val panelDetectionService: PanelDetectionService,
 ) {
   val divinaExtractors =
     extractors
@@ -121,6 +123,12 @@ class BookAnalyzer(
             others,
           )
         }
+
+    val path = book.path
+    pages.forEach { page ->
+      val imageFile = path.resolve(page.fileName).toFile()
+      page.panels = panelDetectionService.detectPanels(imageFile)
+    }
 
     val entriesErrorSummary =
       others

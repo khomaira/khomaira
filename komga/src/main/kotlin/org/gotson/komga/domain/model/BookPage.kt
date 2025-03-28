@@ -7,6 +7,8 @@ open class BookPage(
   val fileHash: String = "",
   val fileSize: Long? = null,
 ) {
+  var panels: List<Panel> = emptyList()
+
   override fun toString(): String = "BookPage(fileName='$fileName', mediaType='$mediaType', dimension=$dimension, fileHash='$fileHash', fileSize=$fileSize)"
 
   fun copy(

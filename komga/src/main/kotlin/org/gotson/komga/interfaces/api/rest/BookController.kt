@@ -21,6 +21,7 @@ import org.gotson.komga.domain.model.Media
 import org.gotson.komga.domain.model.MediaExtensionEpub
 import org.gotson.komga.domain.model.MediaNotReadyException
 import org.gotson.komga.domain.model.MediaProfile
+import org.gotson.komga.domain.model.Panel
 import org.gotson.komga.domain.model.ReadStatus
 import org.gotson.komga.domain.model.SearchCondition
 import org.gotson.komga.domain.model.SearchContext
@@ -766,5 +767,24 @@ class BookController(
     @RequestParam(name = "for_bigger_result_only", required = false) forBiggerResultOnly: Boolean = false,
   ) {
     taskEmitter.findBookThumbnailsToRegenerate(forBiggerResultOnly, LOWEST_PRIORITY)
+  }
+
+  @Operation(summary = "Get panel regions for a page", tags = [OpenApiConfiguration.TagNames.BOOK_PAGES])
+  @GetMapping("api/v1/books/{bookId}/pages/{pageNumber}/panels")
+  fun getBookPagePanels(
+    @AuthenticationPrincipal principal: KomgaPrincipal,
+    @PathVariable bookId: String,
+    @PathVariable pageNumber: Int,
+  ): List<Panel> {
+    bookRepository.findByIdOrNull(bookId)?.let { book ->
+      contentRestrictionChecker.checkContentRestriction(principal.user, book)
+
+      val media = mediaRepository.findById(book.id)
+      if (media.status != Media.Status.READY)
+        throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Book media not ready")
+
+      return media.pages.getOrNull(pageNumber - 1)?.panels
+        ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Page not found")
+    } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND)
   }
 }
